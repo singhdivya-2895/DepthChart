@@ -7,7 +7,7 @@ namespace Application.Query
 {
     public class GetFullDepthChartRequest : IRequest<Dictionary<string, List<DepthChartEntryDto>>>
     {
-        public int TeamId { get; set; }
+        public string TeamId { get; set; }
     }
     public class GetFullDepthChartHandler : IRequestHandler<GetFullDepthChartRequest, Dictionary<string, List<DepthChartEntryDto>>>
     {
@@ -26,7 +26,10 @@ namespace Application.Query
 
             var result = depthChartEntries.GroupBy(d => d.Position)
                                           .ToDictionary(g => g.Key,
-                                                        g => g.Select(e => _mapper.Map<DepthChartEntryDto>(e)).ToList());
+                                                        g => g.OrderBy(e => e.PositionDepth)
+                                                             .Select(e => _mapper.Map<DepthChartEntryDto>(e))
+                                                             .ToList())
+                                          ;
 
             return result;
         }

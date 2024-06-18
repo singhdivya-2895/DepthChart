@@ -7,7 +7,7 @@ namespace Application.Query
 {
     public class GetBackupsRequest : IRequest<List<PlayerDto>>
     {
-        public int TeamId { get; set; }
+        public string TeamId { get; set; }
         public string Position { get; set; }
         public int PlayerNumber { get; set; }
     }

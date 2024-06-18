@@ -18,16 +18,17 @@ namespace Persistence.Repository
             _dbContext = dbContext;
         }
 
-        public async Task<List<DepthChartEntry>> GetDepthChartEntriesAsync(int teamId)
+        public async Task<List<DepthChartEntry>> GetDepthChartEntriesAsync(string teamId)
         {
             var entries = await _dbContext.DepthChartEntries
-                                            .Where(d => d.TeamId == teamId)
-                                            .ToListAsync();
+                                    .Where(d => d.TeamId == teamId)
+                                    .Include(x => x.Player)
+                                    .ToListAsync();
 
             return entries;
         }
 
-        public async Task<DepthChartEntry> GetDepthChartEntryAsync(int teamId,string position, int playerId)
+        public async Task<DepthChartEntry> GetDepthChartEntryAsync(string teamId, string position, int playerId)
         {
             var entry = await _dbContext.DepthChartEntries
                                          .AsNoTracking()

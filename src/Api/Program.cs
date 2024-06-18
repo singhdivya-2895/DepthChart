@@ -27,10 +27,13 @@ namespace Api
 
             builder.Services.AddAutoMapper(typeof(DepthChartProfile));
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(AddPlayerToDepthChartRequest)));
-            
+
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-                        
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Depth Chart Api", Version = "v1" });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -47,17 +50,18 @@ namespace Api
             }
             app.UseHttpsRedirection();
 
-            app.MapPost("/api/team/add", async (IMediator mediator, string name, Sport sport) =>
+            app.MapPost("/api/team/add", async (IMediator mediator, TeamDto team) =>
             {
                 var teamDto = await mediator.Send(new AddTeamRequest
                 {
-                    Name = name,
-                    Sport = sport
+                    teamDto = team
                 });
 
                 return Results.Ok(teamDto);
             })
             .WithName("AddTeamToSport")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Add Team to Sport",
@@ -65,19 +69,18 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapPost("/api/depthchart/add", async (IMediator mediator, int teamId, string position, PlayerDto player, int? positionDepth) =>
+            app.MapPost("/api/depthchart/add", async (IMediator mediator, DepthChartEntryDto depthChartRequest) =>
             {
                 await mediator.Send(new AddPlayerToDepthChartRequest
                 {
-                    TeamId = teamId,
-                    Position = position,
-                    Player = player,
-                    PositionDepth = positionDepth
+                    DepthChartEntry = depthChartRequest
                 });
 
                 return Results.Ok();
             })
             .WithName("AddPlayerToDepthChart")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Add player to depth chart",
@@ -85,7 +88,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapDelete("/api/depthchart/remove", async (IMediator mediator, int teamId, string position, int playerNumber) =>
+            app.MapDelete("/api/depthchart/remove", async (IMediator mediator, string teamId, string position, int playerNumber) =>
             {
                 var player = await mediator.Send(new RemovePlayerFromDepthChartRequest
                 {
@@ -97,6 +100,8 @@ namespace Api
                 return player == null ? Results.NotFound() : Results.Ok(player);
             })
             .WithName("RemovePlayerFromDepthChart")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Remove player from the depth chart",
@@ -104,7 +109,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapGet("/api/depthchart/backups", async (IMediator mediator, int teamId, string position, int playerNumber) =>
+            app.MapGet("/api/depthchart/backups", async (IMediator mediator, string teamId, string position, int playerNumber) =>
             {
                 var backups = await mediator.Send(new GetBackupsRequest
                 {
@@ -116,6 +121,7 @@ namespace Api
                 return Results.Ok(backups);
             })
             .WithName("GetBackups")
+            .Produces<List<PlayerDto>>(StatusCodes.Status200OK)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Get backups for player",
@@ -123,16 +129,22 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Query" } }
             });
 
-            app.MapGet("/api/depthchart/full", async (IMediator mediator, int teamId) =>
+            app.MapGet("/api/depthchart/full", async (IMediator mediator, string teamId) =>
             {
                 var depthChart = await mediator.Send(new GetFullDepthChartRequest
                 {
                     TeamId = teamId
                 });
+                if(!depthChart.Any())
+                {
+                    return Results.NotFound("Team does not exist for the Id.");
+                }
 
                 return Results.Ok(depthChart);
             })
             .WithName("GetFullDepthChart")
+            .Produces<Dictionary<string, List<DepthChartEntryDto>>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Get full depth chart",
@@ -146,10 +158,16 @@ namespace Api
                 {
                     Sport = sport
                 });
+                if (!teams.Any())
+                {
+                    return Results.NotFound("No teams exist for this sport.");
+                }
 
                 return Results.Ok(teams);
             })
             .WithName("GetTeamsForSport")
+            .Produces<List<TeamDto>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Get all teams for sport",
@@ -162,8 +180,8 @@ namespace Api
             void SeedInitialData(FanDuelMemoryDbContext dbContext)
             {
                 dbContext.Teams.AddRange(
-                    new Team { Name = "Team A", Sport = Sport.NFL },
-                    new Team { Name = "Team B", Sport = Sport.NFL }
+                    new Team { Id = "A", Name = "Team A", Sport = Sport.NFL },
+                    new Team { Id = "B", Name = "Team B", Sport = Sport.NFL }
                 );
 
                 dbContext.SaveChanges();

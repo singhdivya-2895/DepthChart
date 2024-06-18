@@ -1,6 +1,5 @@
 ﻿using Application.DTO;
 using AutoMapper;
-using Domain.Enums;
 using Domain.Models;
 using MediatR;
 using Persistence.IRepository;
@@ -9,8 +8,7 @@ namespace Application.Command
 {
     public class AddTeamRequest : IRequest<TeamDto>
     {
-        public string Name { get; set; }
-        public Sport Sport { get; set; }
+        public TeamDto teamDto { get; set; }
     }
 
     public class AddTeamHandler : IRequestHandler<AddTeamRequest, TeamDto>
@@ -26,11 +24,7 @@ namespace Application.Command
 
         public async Task<TeamDto> Handle(AddTeamRequest request, CancellationToken cancellationToken)
         {
-            var team = new Team
-            {
-                Name = request.Name,
-                Sport = request.Sport
-            };
+            var team = _mapper.Map<Team>(request.teamDto);
 
             await _commandRepository.AddTeamAsync(team);
 
