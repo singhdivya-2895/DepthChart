@@ -4,6 +4,16 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);8618;8603</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Persistence\Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="MediatR" Version="12.3.0" />
+  </ItemGroup>
 
 </Project>
