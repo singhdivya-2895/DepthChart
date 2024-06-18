@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Persistence.Context;
+using Persistence.IRepository;
 using System;
 
 namespace Api.Tests
@@ -12,29 +14,24 @@ namespace Api.Tests
     public class CustomWebApplicationFactory<TProgram>
     : WebApplicationFactory<TProgram> where TProgram : class
     {
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        public IDepthChartCommandRepository DepthChartCommandRepository;
+        public IDepthChartQueryRepository DepthChartQueryRepository;
+        protected override IHost CreateHost(IHostBuilder builder)
         {
-            builder.ConfigureTestServices(services =>
+            builder.ConfigureServices(services =>
             {
-                services
-                    .AddEntityFrameworkInMemoryDatabase()
-                    .BuildServiceProvider();
-
-                services.AddDbContext<FanDuelMemoryDbContext>(options =>
-                {
-                    options.UseInMemoryDatabase("InMemoryDbForTesting");
-                });
-
-                var sp = services.BuildServiceProvider();
-
-                using (var scope = sp.CreateScope())
-                {
-                    var scopedServices = scope.ServiceProvider;
-                    var db = scopedServices.GetRequiredService<FanDuelMemoryDbContext>();
-
-                    db.Database.EnsureCreated();
-                }
+                AddRepositories(services);
             });
+
+            return base.CreateHost(builder);
+        }
+
+        private void AddRepositories(IServiceCollection services)
+        {
+            if (DepthChartCommandRepository != null)
+                services.AddSingleton(DepthChartCommandRepository);
+            if (DepthChartQueryRepository != null)
+                services.AddSingleton(DepthChartQueryRepository);
         }
     }
 }

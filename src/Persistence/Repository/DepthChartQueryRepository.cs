@@ -28,11 +28,11 @@ namespace Persistence.Repository
             return entries;
         }
 
-        public async Task<DepthChartEntry> GetDepthChartEntryAsync(string teamId, string position, int playerId)
+        public async Task<DepthChartEntry> GetDepthChartEntryAsync(string teamId, string position, int playerNumber)
         {
             var entry = await _dbContext.DepthChartEntries
                                          .AsNoTracking()
-                                         .FirstOrDefaultAsync(d => d.TeamId == teamId && d.Player.Id == playerId && d.Position == position);
+                                         .FirstOrDefaultAsync(d => d.TeamId == teamId && d.Player.Number == playerNumber && d.Position == position);
 
             return entry;
         }

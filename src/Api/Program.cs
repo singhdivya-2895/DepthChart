@@ -50,7 +50,7 @@ namespace Api
             }
             app.UseHttpsRedirection();
 
-            app.MapPost("/api/team/add", async (IMediator mediator, TeamDto team) =>
+            app.MapPost("/api/team", async (IMediator mediator, TeamDto team) =>
             {
                 var teamDto = await mediator.Send(new AddTeamRequest
                 {
@@ -69,7 +69,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapPost("/api/depthchart/add", async (IMediator mediator, DepthChartEntryDto depthChartRequest) =>
+            app.MapPost("/api/depthchart", async (IMediator mediator, DepthChartEntryDto depthChartRequest) =>
             {
                 await mediator.Send(new AddPlayerToDepthChartRequest
                 {
@@ -88,7 +88,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapDelete("/api/depthchart/remove", async (IMediator mediator, string teamId, string position, int playerNumber) =>
+            app.MapDelete("/api/depthchart", async (IMediator mediator, string teamId, string position, int playerNumber) =>
             {
                 var player = await mediator.Send(new RemovePlayerFromDepthChartRequest
                 {

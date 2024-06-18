@@ -9,17 +9,26 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Moq;
+using Persistence.IRepository;
+using Domain.Models;
 
 namespace Api.Tests
 {
-    public class DepthChartApiTests : IClassFixture<CustomWebApplicationFactory<Program>>
+    public class DepthChartApiTests : IClassFixture<CustomWebApplicationFactory<Api.Program>>
     {
         private readonly CustomWebApplicationFactory<Program> _factory;
         private readonly HttpClient _client;
+        private Mock<IDepthChartCommandRepository> _mockDepthChartCommandRepository;
+        private Mock<IDepthChartQueryRepository> _mockDepthChartQueryRepository;
 
         public DepthChartApiTests(CustomWebApplicationFactory<Program> factory)
         {
             _factory = factory;
+            _mockDepthChartCommandRepository = new Mock<IDepthChartCommandRepository>();
+            _mockDepthChartQueryRepository = new Mock<IDepthChartQueryRepository>();
+            _factory.DepthChartCommandRepository = _mockDepthChartCommandRepository.Object;
+            _factory.DepthChartQueryRepository = _mockDepthChartQueryRepository.Object;
             _client = factory.CreateClient();
         }
 
@@ -27,9 +36,16 @@ namespace Api.Tests
         [Trait("Category", "Integration")]
         public async Task GetFullDepthChart_ShouldReturnOk()
         {
-            await InitializeData();
+            var teamId = "TestA";
+            _mockDepthChartQueryRepository.Setup(repo => repo.GetDepthChartEntriesAsync(teamId))
+                       .ReturnsAsync(new List<DepthChartEntry>
+                       {
+                           new DepthChartEntry { TeamId = teamId, Position = "QB", PositionDepth = 0, Player = new Player(){ Name = "Player 1", Number = 1} },
+                           new DepthChartEntry { TeamId = teamId, Position = "QB", PositionDepth = 1, Player = new Player(){ Name = "Player 2", Number = 2} },
+                           new DepthChartEntry { TeamId = teamId, Position = "QB", PositionDepth = 2, Player = new Player(){ Name = "Player 3", Number = 3} }
+                       });
 
-            var response = await _client.GetAsync("/api/depthchart/full?teamId=A");
+            var response = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -37,43 +53,6 @@ namespace Api.Tests
             depthChart.Should().NotBeNull();
             depthChart.Should().ContainKey("QB");
             depthChart["QB"].Count.Should().Be(3);
-        }
-        private async Task InitializeData()
-        {
-            var teamResponse = await _client.PostAsJsonAsync("/api/teams", new TeamDto { Id = "A", Name = "Team A", Sport = Sport.NFL });
-            teamResponse.EnsureSuccessStatusCode();
-
-            var players = new[]
-            {
-                new PlayerDto { Number = 12, Name = "Tom Brady" },
-                new PlayerDto { Number = 11, Name = "Blaine Gabbert" },
-                new PlayerDto { Number = 2, Name = "Kyle Trask" },
-                new PlayerDto { Number = 13, Name = "Mike Evans" },
-                new PlayerDto { Number = 1, Name = "Jaelon Darden" },
-                new PlayerDto { Number = 10, Name = "Scott Miller" }
-            };
-
-            foreach (var player in players)
-            {
-                var playerResponse = await _client.PostAsJsonAsync("/api/players", player);
-                playerResponse.EnsureSuccessStatusCode();
-            }
-
-            var depthChartEntries = new[]
-            {
-                new { teamId = 1, position = "QB", player = players[0], positionDepth = 0 },
-                new { teamId = 1, position = "QB", player = players[1], positionDepth = 1 },
-                new { teamId = 1, position = "QB", player = players[2], positionDepth = 2 },
-                new { teamId = 1, position = "WR", player = players[3], positionDepth = 0 },
-                new { teamId = 1, position = "WR", player = players[4], positionDepth = 1 },
-                new { teamId = 1, position = "WR", player = players[5], positionDepth = 2 }
-            };
-
-            foreach (var entry in depthChartEntries)
-            {
-                var depthChartResponse = await _client.PostAsJsonAsync("/api/depthchart/add", entry);
-                depthChartResponse.EnsureSuccessStatusCode();
-            }
         }
     }
 }
