@@ -5,6 +5,7 @@ using Domain.Models;
 using Moq;
 using Persistence.IRepository;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Tests.QueryHandlers
 {
@@ -12,10 +13,12 @@ namespace Application.Tests.QueryHandlers
     {
         private Mock<ITeamRepository> _mockTeamRepository;
         private IMapper _mapper;
+        private readonly Mock<ILogger<GetTeamsBySportHandler>> _logger;
 
         public GetTeamsBySportHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<GetTeamsBySportHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -25,7 +28,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_SportExists_ShouldReturnTeams()
         {
             // Arrange
-            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new GetTeamsBySportRequest
             {
@@ -56,7 +59,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_SportDoesNotExist_ShouldReturnEmptyList()
         {
             // Arrange
-            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new GetTeamsBySportRequest
             {

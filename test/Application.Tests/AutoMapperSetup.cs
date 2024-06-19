@@ -1,11 +1,6 @@
 ﻿using Application.DTO;
 using AutoMapper;
 using Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Tests
 {
@@ -16,6 +11,7 @@ namespace Application.Tests
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<DepthChartEntry, DepthChartEntryDto>().ReverseMap();
+                cfg.CreateMap<DepthChartEntry, FullDepthChartEntryDto>();
                 cfg.CreateMap<Player, PlayerDto>().ReverseMap();
                 cfg.CreateMap<Team, TeamDto>().ReverseMap();
             });

@@ -35,6 +35,7 @@ namespace Api
 
             var app = builder.Build();
 
+            app.UseMiddleware<GlobalExceptionMiddleware>();
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -70,16 +71,21 @@ namespace Api
 
             app.MapPost("/api/depthchart", async (IMediator mediator, DepthChartEntryDto depthChartRequest) =>
             {
-                await mediator.Send(new AddPlayerToDepthChartRequest
+                var (statusCode, message) = await mediator.Send(new AddPlayerToDepthChartRequest
                 {
                     DepthChartEntry = depthChartRequest
                 });
+                if (!statusCode)
+                {
+                    return Results.NotFound(message);
+                }
 
                 return Results.Ok();
             })
             .WithName("AddPlayerToDepthChart")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError)
             .WithOpenApi(x => new OpenApiOperation(x)
             {
                 Summary = "Add player to depth chart",

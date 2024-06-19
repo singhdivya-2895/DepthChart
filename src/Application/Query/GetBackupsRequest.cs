@@ -1,6 +1,8 @@
-﻿using Application.DTO;
+﻿using Application.Command;
+using Application.DTO;
 using AutoMapper;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Persistence.IRepository;
 
 namespace Application.Query
@@ -17,19 +19,27 @@ namespace Application.Query
 
         private readonly IMapper _mapper;
 
-        public GetBackupsHandler(ITeamRepository teamRepository, IMapper mapper)
+        private readonly ILogger<GetBackupsHandler> _logger;
+
+        public GetBackupsHandler(ITeamRepository teamRepository, IMapper mapper, ILogger<GetBackupsHandler> logger)
         {
             _teamRepository = teamRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<List<PlayerDto>> Handle(GetBackupsRequest request, CancellationToken cancellationToken)
         {
             var team = await _teamRepository.GetByIdAsync(request.TeamId);
 
-            if (team == null) return null;
+            if (team == null)
+            {
+                _logger.LogError($"Team does not exist for Id: {request.TeamId}.");
+                return null;
+            }
 
             var backups = team.GetBackups(request.Position, request.PlayerNumber);
+            _logger.LogInformation("Backups found successfully.");
 
             return backups.Select(t => _mapper.Map<PlayerDto>(t)).ToList();
         }

@@ -3,40 +3,44 @@ using Application.DTO;
 using Domain.Models;
 using Persistence.IRepository;
 using AutoMapper;
-using Persistence.Repository;
-using System.Numerics;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Command
 {
-    public class AddPlayerToDepthChartRequest : IRequest<Unit>
+    public class AddPlayerToDepthChartRequest : IRequest<(bool, string)>
     {
         public DepthChartEntryDto DepthChartEntry { get; set; }
     }
 
-    public class AddPlayerToDepthChartHandler : IRequestHandler<AddPlayerToDepthChartRequest, Unit>
+    public class AddPlayerToDepthChartHandler : IRequestHandler<AddPlayerToDepthChartRequest, (bool, string)>
     {
         private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
-        public AddPlayerToDepthChartHandler(ITeamRepository teamRepository, IMapper mapper)
+        private readonly ILogger<AddPlayerToDepthChartHandler> _logger;
+        public AddPlayerToDepthChartHandler(ITeamRepository teamRepository, IMapper mapper, ILogger<AddPlayerToDepthChartHandler> logger)
         {
             _teamRepository = teamRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
-        public async Task<Unit> Handle(AddPlayerToDepthChartRequest request, CancellationToken cancellationToken)
+        public async Task<(bool, string)> Handle(AddPlayerToDepthChartRequest request, CancellationToken cancellationToken)
         {
 
             var team = await _teamRepository.GetByIdAsync(request.DepthChartEntry.TeamId);
             if (team == null)
             {
-                throw new Exception("Team not found");
+                _logger.LogError($"Team does not exist for Id: {request.DepthChartEntry.TeamId}.");
+                return (false, "Team not found");
             }
 
             var player = _mapper.Map<Player>(request.DepthChartEntry.Player);
             team.AddDepthChartEntry(request.DepthChartEntry.Position, player, request.DepthChartEntry.PositionDepth ?? -1);
 
             await _teamRepository.UpdateAsync(team);
-            return Unit.Value;
+
+            _logger.LogInformation("Depth chart entry added successfully.");
+            return (true, "");
         }
     }
 }

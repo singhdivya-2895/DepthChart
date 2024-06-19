@@ -5,6 +5,7 @@ using Application.DTO;
 using Domain.Enums;
 using Domain.Models;
 using Persistence.IRepository;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Tests.CommandHandlers
 {
@@ -12,10 +13,12 @@ namespace Application.Tests.CommandHandlers
     {
         private readonly Mock<ITeamRepository> _mockTeamRepository;
         private readonly IMapper _mapper;
+        private readonly Mock<ILogger<AddPlayerToDepthChartHandler>> _logger;
 
         public AddPlayerToDepthChartHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<AddPlayerToDepthChartHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -25,7 +28,7 @@ namespace Application.Tests.CommandHandlers
         public async Task AddPlayerToDepthChartHandler_NoExistingPlayers_ShouldAddPlayer()
         {
             // Arrange
-            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new AddPlayerToDepthChartRequest
             {
@@ -56,7 +59,7 @@ namespace Application.Tests.CommandHandlers
         public async Task AddPlayerToDepthChartHandler_ExistingPlayer_PositionDepthMissing_ShouldAddPlayer()
         {
             // Arrange
-            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new AddPlayerToDepthChartRequest
             {
@@ -88,7 +91,7 @@ namespace Application.Tests.CommandHandlers
         public async Task AddPlayerToDepthChartHandler_ExistingPlayer_MatchingDepth_ShouldAddPlayer()
         {
             // Arrange
-            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new AddPlayerToDepthChartRequest
             {

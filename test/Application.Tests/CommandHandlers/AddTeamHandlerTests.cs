@@ -4,6 +4,7 @@ using AutoMapper;
 using Domain.Enums;
 using Domain.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Persistence.IRepository;
 
@@ -13,10 +14,12 @@ namespace Application.Tests.CommandHandlers
     {
         private readonly Mock<ITeamRepository> _mockTeamRepository;
         private readonly IMapper _mapper;
+        private readonly Mock<ILogger<AddTeamHandler>> _logger;
 
         public AddTeamHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<AddTeamHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -26,7 +29,7 @@ namespace Application.Tests.CommandHandlers
         public async Task Handle_ValidTeam_ShouldAddAndReturnTeamDto()
         {
             // Arrange
-            var handler = new AddTeamHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new AddTeamHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new AddTeamRequest
             {

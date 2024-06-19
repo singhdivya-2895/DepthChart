@@ -4,7 +4,7 @@ using Domain.Models;
 using Moq;
 using Persistence.IRepository;
 using FluentAssertions;
-using Persistence.Repository;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Tests.QueryHandlers
 {
@@ -12,10 +12,12 @@ namespace Application.Tests.QueryHandlers
     {
         private readonly Mock<ITeamRepository> _mockTeamRepository;
         private IMapper _mapper;
+        private readonly Mock<ILogger<GetFullDepthChartHandler>> _logger;
 
         public GetFullDepthChartHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<GetFullDepthChartHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -25,7 +27,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_ShouldReturnFullDepthChart()
         {
             // Arrange
-            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new GetFullDepthChartRequest
             {
@@ -70,7 +72,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_NoEntriesFound_ShouldReturnEmptyDictionary()
         {
             // Arrange
-            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new GetFullDepthChartRequest
             {
@@ -92,7 +94,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_TeamNotExist_ShouldReturnEmptyDictionary()
         {
             // Arrange
-            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new GetFullDepthChartRequest
             {

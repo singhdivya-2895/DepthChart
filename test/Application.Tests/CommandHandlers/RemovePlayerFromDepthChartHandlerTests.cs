@@ -2,6 +2,7 @@
 using AutoMapper;
 using Domain.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Persistence.IRepository;
 
@@ -11,10 +12,12 @@ namespace Application.Tests.CommandHandlers
     {
         private readonly Mock<ITeamRepository> _mockTeamRepository;
         private readonly IMapper _mapper;
+        private readonly Mock<ILogger<RemovePlayerFromDepthChartHandler>> _logger;
 
         public RemovePlayerFromDepthChartHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<RemovePlayerFromDepthChartHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -24,7 +27,7 @@ namespace Application.Tests.CommandHandlers
         public async Task Handle_PlayerExists_ShouldRemoveAndReturnPlayerDto()
         {
             // Arrange
-            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new RemovePlayerFromDepthChartRequest
             {
@@ -74,7 +77,7 @@ namespace Application.Tests.CommandHandlers
         public async Task Handle_PlayerDoesNotExist_ShouldReturnNull()
         {
             // Arrange
-            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var request = new RemovePlayerFromDepthChartRequest
             {

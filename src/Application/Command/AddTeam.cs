@@ -2,6 +2,7 @@
 using AutoMapper;
 using Domain.Models;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using Persistence.IRepository;
 
 namespace Application.Command
@@ -15,11 +16,13 @@ namespace Application.Command
     {
         private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<AddTeamHandler> _logger;
 
-        public AddTeamHandler(ITeamRepository teamRepository, IMapper mapper)
+        public AddTeamHandler(ITeamRepository teamRepository, IMapper mapper, ILogger<AddTeamHandler> logger)
         {
             _teamRepository = teamRepository;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<TeamDto> Handle(AddTeamRequest request, CancellationToken cancellationToken)
@@ -28,6 +31,7 @@ namespace Application.Command
 
             await _teamRepository.AddAsync(team);
 
+            _logger.LogInformation("Team added successfully.");
             return _mapper.Map<TeamDto>(team);
         }
     }

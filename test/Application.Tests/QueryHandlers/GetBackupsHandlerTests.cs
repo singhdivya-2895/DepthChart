@@ -1,8 +1,10 @@
-﻿using Application.DTO;
+﻿using Application.Command;
+using Application.DTO;
 using Application.Query;
 using AutoMapper;
 using Domain.Models;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Persistence.IRepository;
 
@@ -12,10 +14,12 @@ namespace Application.Tests.QueryHandlers
     {
         private readonly Mock<ITeamRepository> _mockTeamRepository;
         private readonly IMapper _mapper;
+        private readonly Mock<ILogger<GetBackupsHandler>> _logger;
 
         public GetBackupsHandlerTests()
         {
             _mockTeamRepository = new Mock<ITeamRepository>();
+            _logger = new Mock<ILogger<GetBackupsHandler>>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -25,7 +29,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_EntryExists_ShouldReturnBackups()
         {
             // Arrange
-            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var teamId = "A";
             var position = "QB";
@@ -72,7 +76,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_TeamDoesNotExist_ShouldReturnNull()
         {
             // Arrange
-            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper);
+            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper, _logger.Object);
 
             var teamId = "A";
             var position = "QB";
