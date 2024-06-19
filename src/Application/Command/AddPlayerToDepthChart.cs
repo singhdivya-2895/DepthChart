@@ -3,6 +3,8 @@ using Application.DTO;
 using Domain.Models;
 using Persistence.IRepository;
 using AutoMapper;
+using Persistence.Repository;
+using System.Numerics;
 
 namespace Application.Command
 {
@@ -13,30 +15,27 @@ namespace Application.Command
 
     public class AddPlayerToDepthChartHandler : IRequestHandler<AddPlayerToDepthChartRequest, Unit>
     {
-        private readonly IDepthChartCommandRepository _commandRepository;
+        private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
-        public AddPlayerToDepthChartHandler(IDepthChartCommandRepository commandRepository, IMapper mapper)
+        public AddPlayerToDepthChartHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _commandRepository = commandRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
         public async Task<Unit> Handle(AddPlayerToDepthChartRequest request, CancellationToken cancellationToken)
         {
-            var entries = await _commandRepository.GetDepthChartEntriesAsync(request.DepthChartEntry.TeamId);
-            int depth = request.DepthChartEntry.PositionDepth ?? entries.Count(e => e.Position == request.DepthChartEntry.Position);
 
-            if (entries?.Count > 0 && request.DepthChartEntry.PositionDepth.HasValue)
+            var team = await _teamRepository.GetByIdAsync(request.DepthChartEntry.TeamId);
+            if (team == null)
             {
-                foreach (var entry in entries.Where(e => e.Position == request.DepthChartEntry.Position && e.PositionDepth >= request.DepthChartEntry.PositionDepth.Value))
-                {
-                    entry.PositionDepth++;
-                }
+                throw new Exception("Team not found");
             }
 
-            var depthChartEntry = _mapper.Map<DepthChartEntry>(request.DepthChartEntry);
-            depthChartEntry.PositionDepth = depth;
-            await _commandRepository.AddPlayerToDepthChartAsync(depthChartEntry);
+            var player = _mapper.Map<Player>(request.DepthChartEntry.Player);
+            team.AddDepthChartEntry(request.DepthChartEntry.Position, player, request.DepthChartEntry.PositionDepth ?? -1);
+
+            await _teamRepository.UpdateAsync(team);
             return Unit.Value;
         }
     }

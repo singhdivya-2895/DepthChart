@@ -1,20 +1,21 @@
-﻿using Application.Command;
-using Application.DTO;
+﻿using Moq;
 using AutoMapper;
+using Application.Command;
+using Application.DTO;
+using Domain.Enums;
 using Domain.Models;
-using Moq;
 using Persistence.IRepository;
 
 namespace Application.Tests.CommandHandlers
 {
     public class AddPlayerToDepthChartHandlerTests
     {
-        private Mock<IDepthChartCommandRepository> _mockCommandRepository;
-        private IMapper _mapper;
+        private readonly Mock<ITeamRepository> _mockTeamRepository;
+        private readonly IMapper _mapper;
 
         public AddPlayerToDepthChartHandlerTests()
         {
-            _mockCommandRepository = new Mock<IDepthChartCommandRepository>();
+            _mockTeamRepository = new Mock<ITeamRepository>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -24,8 +25,7 @@ namespace Application.Tests.CommandHandlers
         public async Task AddPlayerToDepthChartHandler_NoExistingPlayers_ShouldAddPlayer()
         {
             // Arrange
-
-            var handler = new AddPlayerToDepthChartHandler(_mockCommandRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new AddPlayerToDepthChartRequest
             {
@@ -38,20 +38,25 @@ namespace Application.Tests.CommandHandlers
                 }
             };
 
+            var team = new Team("A", "Team A", Sport.NFL);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.DepthChartEntry.TeamId)).ReturnsAsync(team);
+
             // Act
             await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            _mockCommandRepository.Verify(repo => repo.AddPlayerToDepthChartAsync(It.IsAny<DepthChartEntry>()), Times.Once);
+            _mockTeamRepository.Verify(repo => repo.UpdateAsync(It.Is<Team>(t =>
+                t.DepthChartEntries.Any(e =>
+                    e.Position == "QB" &&
+                    e.Player.Name == "Tom Brady" &&
+                    e.Player.Number == 12))), Times.Once);
         }
 
         [Fact]
         public async Task AddPlayerToDepthChartHandler_ExistingPlayer_PositionDepthMissing_ShouldAddPlayer()
         {
             // Arrange
-
-
-            var handler = new AddPlayerToDepthChartHandler(_mockCommandRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new AddPlayerToDepthChartRequest
             {
@@ -62,40 +67,28 @@ namespace Application.Tests.CommandHandlers
                     Player = new PlayerDto { Name = "Tom Brady", Number = 12 }
                 }
             };
-            _mockCommandRepository.Setup(repo => repo.GetDepthChartEntriesAsync(request.DepthChartEntry.TeamId, It.IsAny<bool>(), It.IsAny<string>()))
-                              .ReturnsAsync(new List<DepthChartEntry>() { new DepthChartEntry()
-                                            {
-                                                TeamId = "A",
-                                                Position = "QB",
-                                                PositionDepth = 0,
-                                                Player = new Player { Name = "Existing Player", Number = 1 }
-                                            }});
+
+            var team = new Team("A", "Team A", Sport.NFL);
+            team.AddDepthChartEntry("QB", new Player(1, "Existing Player", 1), 0);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.DepthChartEntry.TeamId)).ReturnsAsync(team);
 
             // Act
-            var response = await handler.Handle(request, CancellationToken.None);
+            await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            _mockCommandRepository.Verify(repo => repo.AddPlayerToDepthChartAsync(
-                It.Is<DepthChartEntry>(entry =>
-                    entry.TeamId == "A" &&
-                    entry.Position == "QB" &&
-                    entry.PositionDepth == 1 &&
-                    entry.Player.Name == "Tom Brady" &&
-                    entry.Player.Number == 12
-                )),
-                Times.Once
-            );
+            _mockTeamRepository.Verify(repo => repo.UpdateAsync(It.Is<Team>(t =>
+                t.DepthChartEntries.Any(e =>
+                    e.Position == "QB" &&
+                    e.Player.Name == "Tom Brady" &&
+                    e.Player.Number == 12 &&
+                    e.PositionDepth == 1))), Times.Once);
         }
-
-
 
         [Fact]
         public async Task AddPlayerToDepthChartHandler_ExistingPlayer_MatchingDepth_ShouldAddPlayer()
         {
             // Arrange
-
-
-            var handler = new AddPlayerToDepthChartHandler(_mockCommandRepository.Object, _mapper);
+            var handler = new AddPlayerToDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new AddPlayerToDepthChartRequest
             {
@@ -107,29 +100,21 @@ namespace Application.Tests.CommandHandlers
                     Player = new PlayerDto { Name = "Tom Brady", Number = 12 }
                 }
             };
-            _mockCommandRepository.Setup(repo => repo.GetDepthChartEntriesAsync(request.DepthChartEntry.TeamId, It.IsAny<bool>(), It.IsAny<string>()))
-                              .ReturnsAsync(new List<DepthChartEntry>() { new DepthChartEntry()
-                                            {
-                                                TeamId = "A",
-                                                Position = "QB",
-                                                PositionDepth = 1,
-                                                Player = new Player { Name = "Existing Player", Number = 1 }
-                                            }});
+
+            var team = new Team("A", "Team A", Sport.NFL);
+            team.AddDepthChartEntry("QB", new Player(1, "Existing Player", 1), 1);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.DepthChartEntry.TeamId)).ReturnsAsync(team);
 
             // Act
-            var response = await handler.Handle(request, CancellationToken.None);
+            await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            _mockCommandRepository.Verify(repo => repo.AddPlayerToDepthChartAsync(
-                It.Is<DepthChartEntry>(entry =>
-                    entry.TeamId == "A" &&
-                    entry.Position == "QB" &&
-                    entry.PositionDepth == 0 &&
-                    entry.Player.Name == "Tom Brady" &&
-                    entry.Player.Number == 12
-                )),
-                Times.Once
-            );
+            _mockTeamRepository.Verify(repo => repo.UpdateAsync(It.Is<Team>(t =>
+                t.DepthChartEntries.Any(e =>
+                    e.Position == "QB" &&
+                    e.Player.Name == "Tom Brady" &&
+                    e.Player.Number == 12 &&
+                    e.PositionDepth == 0))), Times.Once);
         }
     }
 }

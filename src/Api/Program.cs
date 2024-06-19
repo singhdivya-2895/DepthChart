@@ -22,8 +22,7 @@ namespace Api
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<FanDuelMemoryDbContext>(options => options.UseInMemoryDatabase("DepthChartDB"));
-            builder.Services.AddScoped<IDepthChartCommandRepository, DepthChartCommandRepository>();
-            builder.Services.AddScoped<IDepthChartQueryRepository, DepthChartQueryRepository>();
+            builder.Services.AddScoped<ITeamRepository, TeamRepository>();
 
             builder.Services.AddAutoMapper(typeof(DepthChartProfile));
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(AddPlayerToDepthChartRequest)));
@@ -54,7 +53,7 @@ namespace Api
             {
                 var teamDto = await mediator.Send(new AddTeamRequest
                 {
-                    teamDto = team
+                    TeamDto = team
                 });
 
                 return Results.Ok(teamDto);
@@ -135,7 +134,7 @@ namespace Api
                 {
                     TeamId = teamId
                 });
-                if (!depthChart.Any())
+                if (depthChart is null)
                 {
                     return Results.NotFound("Team does not exist for the Id.");
                 }
@@ -143,7 +142,7 @@ namespace Api
                 return Results.Ok(depthChart);
             })
             .WithName("GetFullDepthChart")
-            .Produces<Dictionary<string, List<DepthChartEntryDto>>>(StatusCodes.Status200OK)
+            .Produces<Dictionary<string, List<FullDepthChartEntryDto>>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound)
             .WithOpenApi(x => new OpenApiOperation(x)
             {

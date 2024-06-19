@@ -5,29 +5,31 @@ using Persistence.IRepository;
 
 namespace Application.Query
 {
-    public class GetFullDepthChartRequest : IRequest<Dictionary<string, List<DepthChartEntryDto>>>
+    public class GetFullDepthChartRequest : IRequest<Dictionary<string, List<FullDepthChartEntryDto>>>
     {
         public string TeamId { get; set; }
     }
-    public class GetFullDepthChartHandler : IRequestHandler<GetFullDepthChartRequest, Dictionary<string, List<DepthChartEntryDto>>>
+    public class GetFullDepthChartHandler : IRequestHandler<GetFullDepthChartRequest, Dictionary<string, List<FullDepthChartEntryDto>>>
     {
-        private readonly IDepthChartQueryRepository _queryRepository;
+        private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
 
-        public GetFullDepthChartHandler(IDepthChartQueryRepository queryRepository, IMapper mapper)
+        public GetFullDepthChartHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _queryRepository = queryRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
-        public async Task<Dictionary<string, List<DepthChartEntryDto>>> Handle(GetFullDepthChartRequest request, CancellationToken cancellationToken)
+        public async Task<Dictionary<string, List<FullDepthChartEntryDto>>> Handle(GetFullDepthChartRequest request, CancellationToken cancellationToken)
         {
-            var depthChartEntries = await _queryRepository.GetDepthChartEntriesReadOnlyAsync(request.TeamId);
+            var team = await _teamRepository.GetByIdAsync(request.TeamId);
 
-            var result = depthChartEntries.GroupBy(d => d.Position)
+            if (team == null) return null;
+
+            var result = team.DepthChartEntries.GroupBy(d => d.Position)
                                           .ToDictionary(g => g.Key,
                                                         g => g.OrderBy(e => e.PositionDepth)
-                                                             .Select(e => _mapper.Map<DepthChartEntryDto>(e))
+                                                             .Select(e => _mapper.Map<FullDepthChartEntryDto>(e))
                                                              .ToList())
                                           ;
 

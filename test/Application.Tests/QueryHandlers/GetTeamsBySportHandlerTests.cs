@@ -10,12 +10,12 @@ namespace Application.Tests.QueryHandlers
 {
     public class GetTeamsBySportHandlerTests
     {
-        private Mock<IDepthChartQueryRepository> _mockQueryRepository;
+        private Mock<ITeamRepository> _mockTeamRepository;
         private IMapper _mapper;
 
         public GetTeamsBySportHandlerTests()
         {
-            _mockQueryRepository = new Mock<IDepthChartQueryRepository>();
+            _mockTeamRepository = new Mock<ITeamRepository>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -25,7 +25,7 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_SportExists_ShouldReturnTeams()
         {
             // Arrange
-            var handler = new GetTeamsBySportHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new GetTeamsBySportRequest
             {
@@ -38,7 +38,7 @@ namespace Application.Tests.QueryHandlers
             new Team { Id = "B", Name = "Team B", Sport = Sport.NFL }
         };
 
-            _mockQueryRepository.Setup(repo => repo.GetTeamsBySportAsync(request.Sport))
+            _mockTeamRepository.Setup(repo => repo.GetTeamsBySportAsync(request.Sport))
                                .ReturnsAsync(teams);
 
             // Act
@@ -56,14 +56,14 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_SportDoesNotExist_ShouldReturnEmptyList()
         {
             // Arrange
-            var handler = new GetTeamsBySportHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetTeamsBySportHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new GetTeamsBySportRequest
             {
                 Sport = Sport.MLB // Use a sport that does not exist in the mock setup
             };
 
-            _mockQueryRepository.Setup(repo => repo.GetTeamsBySportAsync(request.Sport))
+            _mockTeamRepository.Setup(repo => repo.GetTeamsBySportAsync(request.Sport))
                                .ReturnsAsync(new List<Team>());
 
             // Act

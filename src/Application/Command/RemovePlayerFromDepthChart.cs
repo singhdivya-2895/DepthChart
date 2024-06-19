@@ -14,28 +14,26 @@ namespace Application.Command
 
     public class RemovePlayerFromDepthChartHandler : IRequestHandler<RemovePlayerFromDepthChartRequest, PlayerDto>
     {
-        private readonly IDepthChartCommandRepository _commandRepository;
+        private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
 
-        public RemovePlayerFromDepthChartHandler(IDepthChartCommandRepository commandRepository, IMapper mapper)
+        public RemovePlayerFromDepthChartHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _commandRepository = commandRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
         public async Task<PlayerDto> Handle(RemovePlayerFromDepthChartRequest request, CancellationToken cancellationToken)
         {
-            var depthChartEntries = await _commandRepository.GetDepthChartEntriesAsync(request.TeamId, includePlayers: true, request.Position);
-            var entry = depthChartEntries.FirstOrDefault(e => e.Player.Number == request.PlayerNumber);
+            var team = await _teamRepository.GetByIdAsync(request.TeamId);
+            if (team == null) { return null; }
+
+            var entry = team.DepthChartEntries.FirstOrDefault(e => e.Player.Number == request.PlayerNumber && e.Position == request.Position);
+
             if (entry == null) return null;
 
-            var backups = depthChartEntries
-                            .Where(d => d.PositionDepth > entry.PositionDepth)
-                            .ToList();
-
-            backups.ForEach(c => c.PositionDepth--);
-
-            await _commandRepository.RemovePlayerFromDepthChartAsync(entry);
+            team.RemovePlayerFromDepthChart(request.Position, request.PlayerNumber);
+            await _teamRepository.UpdateAsync(team);
 
             return _mapper.Map<PlayerDto>(entry.Player);
         }

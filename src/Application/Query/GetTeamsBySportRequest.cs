@@ -12,18 +12,18 @@ namespace Application.Query
     }
     public class GetTeamsBySportHandler : IRequestHandler<GetTeamsBySportRequest, List<TeamDto>>
     {
-        private readonly IDepthChartQueryRepository _queryRepository;
+        private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
 
-        public GetTeamsBySportHandler(IDepthChartQueryRepository queryRepository, IMapper mapper)
+        public GetTeamsBySportHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _queryRepository = queryRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
         public async Task<List<TeamDto>> Handle(GetTeamsBySportRequest request, CancellationToken cancellationToken)
         {
-            var teams = await _queryRepository.GetTeamsBySportAsync(request.Sport);
+            var teams = await _teamRepository.GetTeamsBySportAsync(request.Sport);
 
             return teams.Select(t => _mapper.Map<TeamDto>(t)).ToList();
         }

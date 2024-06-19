@@ -8,25 +8,25 @@ namespace Application.Command
 {
     public class AddTeamRequest : IRequest<TeamDto>
     {
-        public TeamDto teamDto { get; set; }
+        public TeamDto TeamDto { get; set; }
     }
 
     public class AddTeamHandler : IRequestHandler<AddTeamRequest, TeamDto>
     {
-        private readonly IDepthChartCommandRepository _commandRepository;
+        private readonly ITeamRepository _teamRepository;
         private readonly IMapper _mapper;
 
-        public AddTeamHandler(IDepthChartCommandRepository commandRepository, IMapper mapper)
+        public AddTeamHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _commandRepository = commandRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
         public async Task<TeamDto> Handle(AddTeamRequest request, CancellationToken cancellationToken)
         {
-            var team = _mapper.Map<Team>(request.teamDto);
+            var team = _mapper.Map<Team>(request.TeamDto);
 
-            await _commandRepository.AddTeamAsync(team);
+            await _teamRepository.AddAsync(team);
 
             return _mapper.Map<TeamDto>(team);
         }

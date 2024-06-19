@@ -13,27 +13,25 @@ namespace Application.Query
     }
     public class GetBackupsHandler : IRequestHandler<GetBackupsRequest, List<PlayerDto>>
     {
-        private readonly IDepthChartQueryRepository _queryRepository;
+        private readonly ITeamRepository _teamRepository;
 
         private readonly IMapper _mapper;
 
-        public GetBackupsHandler(IDepthChartQueryRepository queryRepository, IMapper mapper)
+        public GetBackupsHandler(ITeamRepository teamRepository, IMapper mapper)
         {
-            _queryRepository = queryRepository;
+            _teamRepository = teamRepository;
             _mapper = mapper;
         }
 
         public async Task<List<PlayerDto>> Handle(GetBackupsRequest request, CancellationToken cancellationToken)
         {
-            var entry = await _queryRepository.GetDepthChartEntryAsync(request.TeamId, request.Position, request.PlayerNumber);
-            if (entry == null) return new List<PlayerDto>();
+            var team = await _teamRepository.GetByIdAsync(request.TeamId);
 
-            var entries = await _queryRepository.GetDepthChartEntriesReadOnlyAsync(request.TeamId);
-            var backups = entries.Where(e => e.Position == request.Position && e.PositionDepth > entry.PositionDepth)
-                                 .Select(e => _mapper.Map<PlayerDto>(e.Player))
-                                 .ToList();
+            if (team == null) return null;
 
-            return backups;
+            var backups = team.GetBackups(request.Position, request.PlayerNumber);
+
+            return backups.Select(t => _mapper.Map<PlayerDto>(t)).ToList();
         }
     }
 }

@@ -11,6 +11,7 @@ namespace Application.Mapping
             CreateMap<Player, PlayerDto>().ReverseMap();
             CreateMap<Team, TeamDto>().ReverseMap();
             CreateMap<DepthChartEntry, DepthChartEntryDto>().ReverseMap();
+            CreateMap<DepthChartEntry, FullDepthChartEntryDto>();
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Application.Command;
 using AutoMapper;
 using Domain.Models;
+using FluentAssertions;
 using Moq;
 using Persistence.IRepository;
 
@@ -8,23 +9,22 @@ namespace Application.Tests.CommandHandlers
 {
     public class RemovePlayerFromDepthChartHandlerTests
     {
-        private Mock<IDepthChartCommandRepository> _mockCommandRepository;
-        private IMapper _mapper;
+        private readonly Mock<ITeamRepository> _mockTeamRepository;
+        private readonly IMapper _mapper;
 
         public RemovePlayerFromDepthChartHandlerTests()
         {
-            _mockCommandRepository = new Mock<IDepthChartCommandRepository>();
+            _mockTeamRepository = new Mock<ITeamRepository>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
         }
 
-
         [Fact]
         public async Task Handle_PlayerExists_ShouldRemoveAndReturnPlayerDto()
         {
             // Arrange
-            var handler = new RemovePlayerFromDepthChartHandler(_mockCommandRepository.Object, _mapper);
+            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new RemovePlayerFromDepthChartRequest
             {
@@ -33,38 +33,48 @@ namespace Application.Tests.CommandHandlers
                 Position = "QB"
             };
 
-            var depthChartEntries = new List<DepthChartEntry>
+            var teamId = request.TeamId;
+            var playerNumber = request.PlayerNumber;
+            var position = request.Position;
+
+            // Mocking the retrieval of Team with depth chart entries
+            var team = new Team
             {
-                new DepthChartEntry
-                {
-                    TeamId = "A",
-                    Position = "QB",
-                    PositionDepth = 0,
-                    Player = new Player { Number = 12, Name = "Tom Brady" }
-                }
+                Id = teamId
+            };
+            var depthChartEntry = new DepthChartEntry
+            {
+                TeamId = teamId,
+                Position = position,
+                PositionDepth = 0,
+                Player = new Player { Number = 12, Name = "Tom Brady" }
             };
 
-            var entryToRemove = depthChartEntries.First();
+            team.AddDepthChartEntry(depthChartEntry.Position, depthChartEntry.Player, depthChartEntry.PositionDepth);
 
-            _mockCommandRepository.Setup(repo => repo.GetDepthChartEntriesAsync(request.TeamId, true, request.Position))
-                                 .ReturnsAsync(depthChartEntries);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(teamId))
+                               .ReturnsAsync(team);
 
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.Equal(12, result.Number);
-            Assert.Equal("Tom Brady", result.Name);
+            result.Should().NotBeNull();
+            result.Number.Should().Be(playerNumber);
+            result.Name.Should().Be("Tom Brady");
 
-            _mockCommandRepository.Verify(repo => repo.RemovePlayerFromDepthChartAsync(entryToRemove), Times.Once);
+            // Verify removal of player from depth chart
+            _mockTeamRepository.Verify(repo => repo.UpdateAsync(
+                It.IsAny<Team>()),
+                Times.Once
+            );
         }
 
         [Fact]
         public async Task Handle_PlayerDoesNotExist_ShouldReturnNull()
         {
             // Arrange
-            var handler = new RemovePlayerFromDepthChartHandler(_mockCommandRepository.Object, _mapper);
+            var handler = new RemovePlayerFromDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new RemovePlayerFromDepthChartRequest
             {
@@ -73,27 +83,34 @@ namespace Application.Tests.CommandHandlers
                 Position = "QB"
             };
 
-            var depthChartEntries = new List<DepthChartEntry>
+            var teamId = request.TeamId;
+            var team = new Team
             {
-                new DepthChartEntry
-                {
-                    TeamId = "A",
-                    Position = "QB",
-                    PositionDepth = 0,
-                    Player = new Player { Number = 12, Name = "Tom Brady" }
-                }
+                Id = teamId
+            };
+            var depthChartEntry = new DepthChartEntry
+            {
+                TeamId = teamId,
+                Position = "QB",
+                PositionDepth = 0,
+                Player = new Player { Number = 12, Name = "Tom Brady" }
             };
 
-            _mockCommandRepository.Setup(repo => repo.GetDepthChartEntriesAsync(request.TeamId, true, request.Position))
-                                 .ReturnsAsync(depthChartEntries);
+            team.AddDepthChartEntry(depthChartEntry.Position, depthChartEntry.Player, depthChartEntry.PositionDepth);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(teamId))
+                               .ReturnsAsync(team);
 
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            Assert.Null(result);
+            result.Should().BeNull();
 
-            _mockCommandRepository.Verify(repo => repo.RemovePlayerFromDepthChartAsync(It.IsAny<DepthChartEntry>()), Times.Never);
+            // Verify that RemovePlayerFromDepthChartAsync was not called
+            _mockTeamRepository.Verify(repo => repo.UpdateAsync(
+                It.IsAny<Team>()),
+                Times.Never
+            );
         }
     }
 }

@@ -10,94 +10,89 @@ namespace Application.Tests.QueryHandlers
 {
     public class GetBackupsHandlerTests
     {
-        private Mock<IDepthChartQueryRepository> _mockQueryRepository;
-        private IMapper _mapper;
+        private readonly Mock<ITeamRepository> _mockTeamRepository;
+        private readonly IMapper _mapper;
 
         public GetBackupsHandlerTests()
         {
-            _mockQueryRepository = new Mock<IDepthChartQueryRepository>();
+            _mockTeamRepository = new Mock<ITeamRepository>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
         }
+
         [Fact]
         public async Task Handle_EntryExists_ShouldReturnBackups()
         {
             // Arrange
-            var handler = new GetBackupsHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper);
 
-            var request = new GetBackupsRequest
+            var teamId = "A";
+            var position = "QB";
+            var playerNumber = 12;
+
+            var team = new Team
             {
-                TeamId = "A",
-                Position = "QB",
-                PlayerNumber = 12
+                Id = teamId
             };
-
-            var entry = new DepthChartEntry
+            var depthChartEntry = new DepthChartEntry
             {
-                TeamId = "A",
-                Position = "QB",
+                TeamId = teamId,
+                Position = position,
                 PositionDepth = 0,
                 Player = new Player { Number = 12, Name = "Tom Brady" }
             };
 
-            var entries = new List<DepthChartEntry>
-            {
-                entry,
-                new DepthChartEntry
-                {
-                    TeamId = "A",
-                    Position = "QB",
-                    PositionDepth = 1,
-                    Player = new Player { Number = 13, Name = "Backup Player 1" }
-                },
-                new DepthChartEntry
-                {
-                    TeamId = "A",
-                    Position = "QB",
-                    PositionDepth = 2,
-                    Player = new Player { Number = 14, Name = "Backup Player 2" }
-                }
-            };
+            team.AddDepthChartEntry(depthChartEntry.Position, depthChartEntry.Player, depthChartEntry.PositionDepth);
+            team.AddDepthChartEntry(position, new Player { Number = 13, Name = "Backup Player 1" }, 1);
+            team.AddDepthChartEntry(position, new Player { Number = 14, Name = "Backup Player 2" }, 1);
 
-            _mockQueryRepository.Setup(repo => repo.GetDepthChartEntryAsync(request.TeamId, request.Position, request.PlayerNumber))
-                               .ReturnsAsync(entry);
-
-            _mockQueryRepository.Setup(repo => repo.GetDepthChartEntriesReadOnlyAsync(request.TeamId))
-                               .ReturnsAsync(entries);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(teamId))
+                               .ReturnsAsync(team);
 
             // Act
+            var request = new GetBackupsRequest
+            {
+                TeamId = teamId,
+                Position = position,
+                PlayerNumber = playerNumber
+            };
+
             var result = await handler.Handle(request, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull()
-                          .And.HaveCount(2)
-                          .And.ContainItemsAssignableTo<PlayerDto>()
-                          .And.Contain(p => p.Number == 13 && p.Name == "Backup Player 1")
-                          .And.Contain(p => p.Number == 14 && p.Name == "Backup Player 2");
+                  .And.HaveCount(2)
+                  .And.ContainItemsAssignableTo<PlayerDto>()
+                  .And.Contain(p => p.Number == 13 && p.Name == "Backup Player 1")
+                  .And.Contain(p => p.Number == 14 && p.Name == "Backup Player 2");
         }
 
         [Fact]
-        public async Task Handle_EntryDoesNotExist_ShouldReturnEmptyList()
+        public async Task Handle_TeamDoesNotExist_ShouldReturnNull()
         {
             // Arrange
-            var handler = new GetBackupsHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetBackupsHandler(_mockTeamRepository.Object, _mapper);
 
-            var request = new GetBackupsRequest
-            {
-                TeamId = "A",
-                Position = "QB",
-                PlayerNumber = 99 // Non-existent player number
-            };
+            var teamId = "A";
+            var position = "QB";
+            var playerNumber = 99;
 
-            _mockQueryRepository.Setup(repo => repo.GetDepthChartEntryAsync(request.TeamId, request.Position, request.PlayerNumber))
-                               .ReturnsAsync((DepthChartEntry)null);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(teamId))
+                               .ReturnsAsync((Team)null);
 
             // Act
+            var request = new GetBackupsRequest
+            {
+                TeamId = teamId,
+                Position = position,
+                PlayerNumber = playerNumber
+            };
+
             var result = await handler.Handle(request, CancellationToken.None);
 
             // Assert
-            result.Should().BeEmpty();
+            result.Should().BeNull();
         }
     }
 }

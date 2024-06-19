@@ -4,17 +4,18 @@ using Domain.Models;
 using Moq;
 using Persistence.IRepository;
 using FluentAssertions;
+using Persistence.Repository;
 
 namespace Application.Tests.QueryHandlers
 {
     public class GetFullDepthChartHandlerTests
     {
-        private Mock<IDepthChartQueryRepository> _mockQueryRepository;
+        private readonly Mock<ITeamRepository> _mockTeamRepository;
         private IMapper _mapper;
 
         public GetFullDepthChartHandlerTests()
         {
-            _mockQueryRepository = new Mock<IDepthChartQueryRepository>();
+            _mockTeamRepository = new Mock<ITeamRepository>();
 
             // Initialize AutoMapper
             _mapper = AutoMapperSetup.Initialize();
@@ -24,12 +25,13 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_ShouldReturnFullDepthChart()
         {
             // Arrange
-            var handler = new GetFullDepthChartHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new GetFullDepthChartRequest
             {
                 TeamId = "A"
             };
+            var team = new Team { Id = "A" };
 
             var depthChartEntries = new List<DepthChartEntry>
             {
@@ -38,9 +40,12 @@ namespace Application.Tests.QueryHandlers
                 new DepthChartEntry { TeamId = "A", Position = "WR", PositionDepth = 0, Player = new Player { Number = 80, Name = "Mike Evans" } },
                 new DepthChartEntry { TeamId = "A", Position = "WR", PositionDepth = 1, Player = new Player { Number = 10, Name = "Chris Godwin" } }
             };
+            foreach (var entry in depthChartEntries) { 
+                team.AddDepthChartEntry(entry.Position, entry.Player, entry.PositionDepth);
+            }
 
-            _mockQueryRepository.Setup(repo => repo.GetDepthChartEntriesReadOnlyAsync(request.TeamId))
-                               .ReturnsAsync(depthChartEntries);
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.TeamId))
+                               .ReturnsAsync(team);
 
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
@@ -65,21 +70,44 @@ namespace Application.Tests.QueryHandlers
         public async Task Handle_NoEntriesFound_ShouldReturnEmptyDictionary()
         {
             // Arrange
-            var handler = new GetFullDepthChartHandler(_mockQueryRepository.Object, _mapper);
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
 
             var request = new GetFullDepthChartRequest
             {
                 TeamId = "B" // Non-existent team ID
             };
+            var team = new Team { Id = "B" };
 
-            _mockQueryRepository.Setup(repo => repo.GetDepthChartEntriesReadOnlyAsync(request.TeamId))
-                               .ReturnsAsync(new List<DepthChartEntry>());
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.TeamId))
+                               .ReturnsAsync(team);
 
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull().And.BeEmpty();
+        }
+
+        [Fact]
+        public async Task Handle_TeamNotExist_ShouldReturnEmptyDictionary()
+        {
+            // Arrange
+            var handler = new GetFullDepthChartHandler(_mockTeamRepository.Object, _mapper);
+
+            var request = new GetFullDepthChartRequest
+            {
+                TeamId = "B" // Non-existent team ID
+            };
+            var team = new Team { Id = "B" };
+
+            _mockTeamRepository.Setup(repo => repo.GetByIdAsync(request.TeamId))
+                               .ReturnsAsync((Team)null);
+
+            // Act
+            var result = await handler.Handle(request, CancellationToken.None);
+
+            // Assert
+            result.Should().BeNull();
         }
     }
 }
