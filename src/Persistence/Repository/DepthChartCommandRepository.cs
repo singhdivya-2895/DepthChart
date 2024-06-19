@@ -1,4 +1,5 @@
 ﻿using Domain.Models;
+using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 using Persistence.IRepository;
 
@@ -11,6 +12,25 @@ namespace Persistence.Repository
         public DepthChartCommandRepository(FanDuelMemoryDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<List<DepthChartEntry>> GetDepthChartEntriesAsync(string teamId, bool includePlayers = false, string postion = "")
+        {
+            IQueryable<DepthChartEntry> query = _context.DepthChartEntries
+                                                    .Where((d => d.TeamId == teamId))
+                                                    .AsQueryable();
+
+            if (postion != String.Empty)
+            {
+                query = query.Where(d => d.Position == postion);
+            }
+
+            if (includePlayers)
+            {
+                query = query.Include(d => d.Player);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task AddPlayerToDepthChartAsync(DepthChartEntry depthChartEntry)

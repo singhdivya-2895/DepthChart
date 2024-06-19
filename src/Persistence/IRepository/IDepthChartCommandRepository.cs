@@ -7,5 +7,6 @@ namespace Persistence.IRepository
         Task AddTeamAsync(Team team);
         Task AddPlayerToDepthChartAsync(DepthChartEntry depthChartEntry);
         Task RemovePlayerFromDepthChartAsync(DepthChartEntry depthChartEntry);
+        Task<List<DepthChartEntry>> GetDepthChartEntriesAsync(string teamId, bool includePlayers = false, string position = "");
     }
 }

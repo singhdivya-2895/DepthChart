@@ -28,7 +28,7 @@ namespace Application.Query
             var entry = await _queryRepository.GetDepthChartEntryAsync(request.TeamId, request.Position, request.PlayerNumber);
             if (entry == null) return new List<PlayerDto>();
 
-            var entries = await _queryRepository.GetDepthChartEntriesAsync(request.TeamId);
+            var entries = await _queryRepository.GetDepthChartEntriesReadOnlyAsync(request.TeamId);
             var backups = entries.Where(e => e.Position == request.Position && e.PositionDepth > entry.PositionDepth)
                                  .Select(e => _mapper.Map<PlayerDto>(e.Player))
                                  .ToList();

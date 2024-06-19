@@ -18,9 +18,10 @@ namespace Persistence.Repository
             _dbContext = dbContext;
         }
 
-        public async Task<List<DepthChartEntry>> GetDepthChartEntriesAsync(string teamId)
+        public async Task<List<DepthChartEntry>> GetDepthChartEntriesReadOnlyAsync(string teamId)
         {
             var entries = await _dbContext.DepthChartEntries
+                                    .AsNoTracking()
                                     .Where(d => d.TeamId == teamId)
                                     .Include(x => x.Player)
                                     .ToListAsync();

@@ -22,7 +22,7 @@ namespace Application.Query
 
         public async Task<Dictionary<string, List<DepthChartEntryDto>>> Handle(GetFullDepthChartRequest request, CancellationToken cancellationToken)
         {
-            var depthChartEntries = await _queryRepository.GetDepthChartEntriesAsync(request.TeamId);
+            var depthChartEntries = await _queryRepository.GetDepthChartEntriesReadOnlyAsync(request.TeamId);
 
             var result = depthChartEntries.GroupBy(d => d.Position)
                                           .ToDictionary(g => g.Key,

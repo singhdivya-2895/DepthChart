@@ -135,7 +135,7 @@ namespace Api
                 {
                     TeamId = teamId
                 });
-                if(!depthChart.Any())
+                if (!depthChart.Any())
                 {
                     return Results.NotFound("Team does not exist for the Id.");
                 }
@@ -183,6 +183,14 @@ namespace Api
                     new Team { Id = "A", Name = "Team A", Sport = Sport.NFL },
                     new Team { Id = "B", Name = "Team B", Sport = Sport.NFL }
                 );
+
+                dbContext.DepthChartEntries.AddRange(
+                    new List<DepthChartEntry>
+                       {
+                           new DepthChartEntry { TeamId = "A", Position = "QB", PositionDepth = 0, Player = new Player(){ Name = "Player 1", Number = 1} },
+                           new DepthChartEntry { TeamId = "A", Position = "QB", PositionDepth = 1, Player = new Player(){ Name = "Player 2", Number = 2} },
+                           new DepthChartEntry { TeamId = "A", Position = "QB", PositionDepth = 2, Player = new Player(){ Name = "Player 3", Number = 3} }
+                       });
 
                 dbContext.SaveChanges();
             }
