@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   mydepthchartapi:
-    image: myapi
+    image: ds160167/fulldepthchart:latest
     ports:
         - 5000:80    
     restart: always
