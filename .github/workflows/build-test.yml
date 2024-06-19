@@ -5,7 +5,7 @@ name: Build and Test Depth Chart Api
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 
 jobs:
