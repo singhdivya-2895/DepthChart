@@ -3,6 +3,7 @@ using Application.Command;
 using Application.DTO;
 using Application.Mapping;
 using Application.Query;
+using Application.Validations;
 using Domain.Enums;
 using Domain.Models;
 using MediatR;
@@ -11,8 +12,12 @@ using Microsoft.OpenApi.Models;
 using Persistence.Context;
 using Persistence.IRepository;
 using Persistence.Repository;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
+using FluentValidation;
 using System;
-using System.Data;
+using FluentValidation.Results;
 
 namespace Api
 {
@@ -32,6 +37,8 @@ namespace Api
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Depth Chart Api", Version = "v1" });
             });
+            builder.Services.AddScoped<IValidator<TeamDto>, TeamDtoValidator>();
+            builder.Services.AddScoped<IValidator<DepthChartEntryDto>, DepthChartEntryDtoValidator>();
 
             var app = builder.Build();
 
@@ -50,8 +57,14 @@ namespace Api
             }
             app.UseHttpsRedirection();
 
-            app.MapPost("/api/team", async (IMediator mediator, TeamDto team) =>
+            app.MapPost("/api/team", async (IValidator<TeamDto> validator,IMediator mediator, [FromBody] TeamDto team) =>
             {
+                ValidationResult validationResult = await validator.ValidateAsync(team);
+
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
                 var teamDto = await mediator.Send(new AddTeamRequest
                 {
                     TeamDto = team
@@ -69,8 +82,14 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapPost("/api/depthchart", async (IMediator mediator, DepthChartEntryDto depthChartRequest) =>
+            app.MapPost("/api/depthchart", async (IValidator<DepthChartEntryDto> validator, IMediator mediator, [FromBody] DepthChartEntryDto depthChartRequest) =>
             {
+                ValidationResult validationResult = await validator.ValidateAsync(depthChartRequest);
+
+                if (!validationResult.IsValid)
+                {
+                    return Results.ValidationProblem(validationResult.ToDictionary());
+                }
                 var (statusCode, message) = await mediator.Send(new AddPlayerToDepthChartRequest
                 {
                     DepthChartEntry = depthChartRequest
