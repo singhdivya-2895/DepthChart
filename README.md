@@ -55,6 +55,13 @@ The project follows the Command Query Responsibility Segregation (CQRS) pattern,
 2. Build the solution to restore the necessary packages and compile the project.
 3. Set the startup project to the API project.
 4. Run the application.
+5. You can also use dotnet run from Api.
+
+    ```
+    cd .\src\Api\
+
+    dotnet run
+    ```
 
 ## Continuous Integration
 
