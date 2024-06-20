@@ -12,11 +12,8 @@ using Microsoft.OpenApi.Models;
 using Persistence.Context;
 using Persistence.IRepository;
 using Persistence.Repository;
-using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
 using FluentValidation;
-using System;
 using FluentValidation.Results;
 
 namespace Api
@@ -82,7 +79,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapPost("/api/depthchart", async (IValidator<DepthChartEntryDto> validator, IMediator mediator, [FromBody] DepthChartEntryDto depthChartRequest) =>
+            app.MapPost("/api/depthchartentry", async (IValidator<DepthChartEntryDto> validator, IMediator mediator, [FromBody] DepthChartEntryDto depthChartRequest) =>
             {
                 ValidationResult validationResult = await validator.ValidateAsync(depthChartRequest);
 
@@ -112,7 +109,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapDelete("/api/depthchart", async (IMediator mediator, string teamId, string position, int playerNumber) =>
+            app.MapDelete("/api/depthchartentry/{teamId}", async (IMediator mediator, [FromRoute] string teamId, string position, int playerNumber) =>
             {
                 var player = await mediator.Send(new RemovePlayerFromDepthChartRequest
                 {
@@ -133,7 +130,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Command" } }
             });
 
-            app.MapGet("/api/depthchart/backups", async (IMediator mediator, string teamId, string position, int playerNumber) =>
+            app.MapGet("/api/depthchart/{teamId}/backups", async (IMediator mediator, [FromRoute] string teamId, string position, int playerNumber) =>
             {
                 var backups = await mediator.Send(new GetBackupsRequest
                 {
@@ -153,7 +150,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Query" } }
             });
 
-            app.MapGet("/api/depthchart/full", async (IMediator mediator, string teamId) =>
+            app.MapGet("/api/depthchart/{teamId}", async (IMediator mediator, [FromRoute] string teamId) =>
             {
                 var depthChart = await mediator.Send(new GetFullDepthChartRequest
                 {
@@ -176,7 +173,7 @@ namespace Api
                 Tags = new List<OpenApiTag> { new() { Name = "Query" } }
             });
 
-            app.MapGet("/api/teams", async (IMediator mediator, Sport sport) =>
+            app.MapGet("/api/teams/{sport}", async (IMediator mediator, [FromRoute] Sport sport) =>
             {
                 var teams = await mediator.Send(new GetTeamsBySportRequest
                 {

@@ -1,0 +1,15 @@
+version: "3.2"
+services:
+  mydepthchartapi-debug:
+    build:
+      context: .
+      dockerfile: src/Api/Dockerfile
+    ports:
+      - 5000:80    
+    restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+networks:
+  default:
+    name: mydepthchartapi-debug

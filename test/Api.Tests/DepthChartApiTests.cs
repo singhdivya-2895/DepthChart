@@ -25,7 +25,7 @@ namespace Api.IntegrationTests
         public async Task GetFullDepthChart_ShouldReturnOk()
         {
             var teamId = "TestA";
-            var response = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
+            var response = await _client.GetAsync($"/api/depthchart/{teamId}");
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await response.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
@@ -42,7 +42,7 @@ namespace Api.IntegrationTests
             var invalidTeamId = "TestC";
 
             // Act
-            var response = await _client.GetAsync($"/api/depthchart/full?teamId={invalidTeamId}");
+            var response = await _client.GetAsync($"/api/depthchart/{invalidTeamId}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -60,7 +60,7 @@ namespace Api.IntegrationTests
             var player = new PlayerDto { Number = 0, Name = "" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "", player, positionDepth = 0 });
+            var response = await _client.PostAsJsonAsync("/api/depthchartentry", new { teamId, position = "", player, positionDepth = 0 });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest); 
@@ -81,13 +81,13 @@ namespace Api.IntegrationTests
             var player = new PlayerDto { Number = 3, Name = "New Player" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "RB", player, positionDepth = 0 });
+            var response = await _client.PostAsJsonAsync("/api/depthchartentry", new { teamId, position = "RB", player, positionDepth = 0 });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             // Check the depth chart now
-            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
+            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/{teamId}");
 
             getFullChartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await getFullChartResponse.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
@@ -105,14 +105,14 @@ namespace Api.IntegrationTests
             var player = new PlayerDto { Number = 4, Name = "New Player" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "Pitcher", player });
+            var response = await _client.PostAsJsonAsync("/api/depthchartentry", new { teamId, position = "Pitcher", player });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
 
             // Check the depth chart now
-            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
+            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/{teamId}");
 
             getFullChartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await getFullChartResponse.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
@@ -122,7 +122,7 @@ namespace Api.IntegrationTests
             depthChart["Pitcher"][3].PositionDepth.Should().Be(3);
 
             // Remove the added player
-            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber=4");
+            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchartentry/{teamId}?position=Pitcher&playerNumber=4");
 
             removePlayerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedPlayer = await removePlayerResponse.Content.ReadFromJsonAsync<PlayerDto>();
@@ -140,14 +140,14 @@ namespace Api.IntegrationTests
             var player = new PlayerDto { Number = 4, Name = "New Player" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "Pitcher", player, positionDepth = 1 });
+            var response = await _client.PostAsJsonAsync("/api/depthchartentry", new { teamId, position = "Pitcher", player, positionDepth = 1 });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
 
             // Check the depth chart now
-            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
+            var getFullChartResponse = await _client.GetAsync($"/api/depthchart/{teamId}");
 
             getFullChartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await getFullChartResponse.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
@@ -158,7 +158,7 @@ namespace Api.IntegrationTests
             depthChart["Pitcher"].Where(x => x.Player.Number == 2).FirstOrDefault()?.PositionDepth.Should().Be(2);
 
             // Remove the added player
-            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber=4");
+            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchartentry/{teamId}?position=Pitcher&playerNumber=4");
 
             removePlayerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedPlayer = await removePlayerResponse.Content.ReadFromJsonAsync<PlayerDto>();
@@ -178,11 +178,11 @@ namespace Api.IntegrationTests
             var requestDto = new DepthChartEntryDto { TeamId = teamId, Position = position, Player = new PlayerDto() { Number = playerNumber, Name = "New Player" } };
 
             // Act
-            var addPlayerResponse = await _client.PostAsJsonAsync("/api/depthchart", requestDto);
+            var addPlayerResponse = await _client.PostAsJsonAsync("/api/depthchartentry", requestDto);
 
             addPlayerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-            var response = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=RB&playerNumber={playerNumber}");
+            var response = await _client.DeleteAsync($"/api/depthchartentry/{teamId}?position=RB&playerNumber={playerNumber}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -201,7 +201,7 @@ namespace Api.IntegrationTests
             var playerNumber = 999;
 
             // Act
-            var response = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber={playerNumber}");
+            var response = await _client.DeleteAsync($"/api/depthchartentry/{teamId}?position=Pitcher&playerNumber={playerNumber}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -216,7 +216,7 @@ namespace Api.IntegrationTests
             var playerNumber = 1;
 
             // Act
-            var response = await _client.GetAsync($"/api/depthchart/backups?teamId={teamId}&position=Pitcher&playerNumber={playerNumber}");
+            var response = await _client.GetAsync($"/api/depthchart/{teamId}/backups?position=Pitcher&playerNumber={playerNumber}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -233,7 +233,7 @@ namespace Api.IntegrationTests
             var sport = Sport.TEST;
 
             // Act
-            var response = await _client.GetAsync($"/api/teams?sport={sport}");
+            var response = await _client.GetAsync($"/api/teams/{sport}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -270,7 +270,7 @@ namespace Api.IntegrationTests
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var getResponse = await _client.GetAsync($"/api/teams?sport=TEST");
+            var getResponse = await _client.GetAsync($"/api/teams/TEST");
             getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedTeams = await getResponse.Content.ReadFromJsonAsync<List<TeamDto>>();
             returnedTeams.Should().NotBeNull();
