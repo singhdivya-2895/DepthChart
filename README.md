@@ -43,11 +43,11 @@ The project follows the Command Query Responsibility Segregation (CQRS) pattern,
 1. Ensure you have Docker installed and running on your machine. You can start the application using Docker Compose with the following command:
 
    ```bash
-   docker-compose up
+   docker-compose up -d
 
    # Note: For local code build use:
 
-   docker compose -f .\docker-compose.debug.yml up -d
+   docker compose -f .\docker-compose.debug.yml up
    ```
 2. Browse [http://localhost:5000/swagger/index.html](http://localhost:5000/swagger/index.html) on your browser.
 ### Using Visual Studio
