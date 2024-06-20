@@ -9,10 +9,11 @@ This project is a .NET 7 application that manages a depth chart for sports teams
 - .NET 7
 - C#
 - Entity Framework Core
-- In-Memory Database
+- In-Memory Database (SqlLite)
 - MediatR
 - FluentValidation
 - AutoMapper
+- Global Exception Handling & Logging
 - Docker
 
 ## Architecture
@@ -20,13 +21,14 @@ This project is a .NET 7 application that manages a depth chart for sports teams
 ### Layers
 
 1. **API Layer**
-    - Contains the routes and controllers.
+    - Contains the minimal api routes.
+    - Contains all the service registrations and global exception handler.
 2. **Application Layer**
     - Contains the MediatR handlers, Data Transfer Objects (DTOs), FluentValidation validators, and AutoMapper profiles.
 3. **Domain Layer**
     - Contains the domain models and the business logic for managing the depth chart.
 4. **Persistence Layer**
-    - Contains the database context and repository implementations.
+    - Contains the database context and team repository implementations.
 
 ### Pattern
 
@@ -102,3 +104,9 @@ I have already seeded some data for Team A in NFL.
 
 E.g.: Full Depth chart for Team A
 ![Full Depth Chart for Team A](./resources/response.png)
+
+## Assumptions
+1. I have not added the Player as separate entity. It is being simply stored as part of depth entry.
+2. After removing the player from the depth chart for a position, I am decrementing the position depth of the backups.
+3. No two players for a position will have same position depth in the team.
+4. No security or authorisation is required.
