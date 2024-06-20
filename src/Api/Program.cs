@@ -216,6 +216,26 @@ namespace Api
                            new DepthChartEntry { TeamId = "A", Position = "QB", PositionDepth = 2, Player = new Player(){ Name = "Player 3", Number = 3} }
                        });
 
+
+                dbContext.DepthChartEntries.AddRange(
+                    new List<DepthChartEntry>
+                       {
+                           new DepthChartEntry { TeamId = "A", Position = "LT", PositionDepth = 0, Player = new Player(){ Name = "Player 1", Number = 1} },
+                           new DepthChartEntry { TeamId = "A", Position = "LT", PositionDepth = 1, Player = new Player(){ Name = "Player 4", Number = 4} }
+                       });
+
+                dbContext.DepthChartEntries.AddRange(
+                    new List<DepthChartEntry>
+                       {
+                           new DepthChartEntry { TeamId = "A", Position = "LG", PositionDepth = 0, Player = new Player(){ Name = "Player 5", Number = 5} }
+                       });
+
+                dbContext.DepthChartEntries.AddRange(
+                    new List<DepthChartEntry>
+                       {
+                           new DepthChartEntry { TeamId = "A", Position = "RB", PositionDepth = 0, Player = new Player(){ Name = "Player 6", Number = 6} }
+                       });
+
                 dbContext.SaveChanges();
             }
         }

@@ -5,6 +5,8 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Moq;
 using Persistence.IRepository;
+using Microsoft.AspNetCore.Mvc;
+using Domain.Models;
 
 namespace Api.IntegrationTests
 {
@@ -22,14 +24,14 @@ namespace Api.IntegrationTests
         [Trait("Category", "Integration")]
         public async Task GetFullDepthChart_ShouldReturnOk()
         {
-            var teamId = "A";
+            var teamId = "TestA";
             var response = await _client.GetAsync($"/api/depthchart/full?teamId={teamId}");
 
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await response.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
             depthChart.Should().NotBeNull();
-            depthChart.Should().ContainKey("QB");
-            depthChart["QB"].Count.Should().Be(3);
+            depthChart.Should().ContainKey("Pitcher");
+            depthChart["Pitcher"].Count.Should().Be(3);
         }
 
         [Fact]
@@ -37,7 +39,7 @@ namespace Api.IntegrationTests
         public async Task GetFullDepthChart_InvalidTeamId_ShouldReturnNotFound()
         {
             // Arrange
-            var invalidTeamId = "C";
+            var invalidTeamId = "TestC";
 
             // Act
             var response = await _client.GetAsync($"/api/depthchart/full?teamId={invalidTeamId}");
@@ -48,12 +50,34 @@ namespace Api.IntegrationTests
             errorMessage.Should().Be("\"Team does not exist for the Id.\"");
         }
 
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public async Task AddPlayerToDepthChart_InvalidPosition_ShouldReturnBadRequest()
+        {
+            // Arrange
+            var teamId = "";
+            var player = new PlayerDto { Number = 0, Name = "" };
+
+            // Act
+            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "", player, positionDepth = 0 });
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest); 
+            var errorResponse = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+            errorResponse.Should().NotBeNull();
+            errorResponse.Errors.Should().ContainKey("TeamId");
+            errorResponse.Errors.Should().ContainKey("Position");
+            errorResponse.Errors.Should().ContainKey("Player.Name");
+            errorResponse.Errors.Should().ContainKey("Player.Number");
+        }
+
         [Fact]
         [Trait("Category", "Integration")]
         public async Task AddPlayerToDepthChart_NoExistingPlayers_ShouldReturnOk()
         {
             // Arrange
-            var teamId = "B";
+            var teamId = "TestB";
             var player = new PlayerDto { Number = 3, Name = "New Player" };
 
             // Act
@@ -77,11 +101,11 @@ namespace Api.IntegrationTests
         public async Task AddPlayerToDepthChart_WithExistingPlayers_MissingPositionDepth_ShouldReturnOk()
         {
             // Arrange
-            var teamId = "A";
+            var teamId = "TestA";
             var player = new PlayerDto { Number = 4, Name = "New Player" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "QB", player });
+            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "Pitcher", player });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -93,12 +117,12 @@ namespace Api.IntegrationTests
             getFullChartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await getFullChartResponse.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
             depthChart.Should().NotBeNull();
-            depthChart.Should().ContainKey("QB");
-            depthChart["QB"].Count.Should().Be(4);
-            depthChart["QB"][3].PositionDepth.Should().Be(3);
+            depthChart.Should().ContainKey("Pitcher");
+            depthChart["Pitcher"].Count.Should().Be(4);
+            depthChart["Pitcher"][3].PositionDepth.Should().Be(3);
 
             // Remove the added player
-            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=QB&playerNumber=4");
+            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber=4");
 
             removePlayerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedPlayer = await removePlayerResponse.Content.ReadFromJsonAsync<PlayerDto>();
@@ -112,11 +136,11 @@ namespace Api.IntegrationTests
         public async Task AddPlayerToDepthChart_WithExistingPlayers_WithMatchingPositionDepth_ShouldReturnOk()
         {
             // Arrange
-            var teamId = "A";
+            var teamId = "TestA";
             var player = new PlayerDto { Number = 4, Name = "New Player" };
 
             // Act
-            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "QB", player, positionDepth = 1 });
+            var response = await _client.PostAsJsonAsync("/api/depthchart", new { teamId, position = "Pitcher", player, positionDepth = 1 });
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -128,13 +152,13 @@ namespace Api.IntegrationTests
             getFullChartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var depthChart = await getFullChartResponse.Content.ReadFromJsonAsync<Dictionary<string, List<DepthChartEntryDto>>>();
             depthChart.Should().NotBeNull();
-            depthChart.Should().ContainKey("QB");
-            depthChart["QB"].Count.Should().Be(4);
-            depthChart["QB"].Where(x => x.Player.Number == 4).FirstOrDefault()?.PositionDepth.Should().Be(1);
-            depthChart["QB"].Where(x => x.Player.Number == 2).FirstOrDefault()?.PositionDepth.Should().Be(2);
+            depthChart.Should().ContainKey("Pitcher");
+            depthChart["Pitcher"].Count.Should().Be(4);
+            depthChart["Pitcher"].Where(x => x.Player.Number == 4).FirstOrDefault()?.PositionDepth.Should().Be(1);
+            depthChart["Pitcher"].Where(x => x.Player.Number == 2).FirstOrDefault()?.PositionDepth.Should().Be(2);
 
             // Remove the added player
-            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=QB&playerNumber=4");
+            var removePlayerResponse = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber=4");
 
             removePlayerResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedPlayer = await removePlayerResponse.Content.ReadFromJsonAsync<PlayerDto>();
@@ -148,7 +172,7 @@ namespace Api.IntegrationTests
         public async Task RemovePlayerFromDepthChart_ShouldReturnOk()
         {
             // Arrange
-            var teamId = "A";
+            var teamId = "TestA";
             var playerNumber = 4;
             var position = "RB";
             var requestDto = new DepthChartEntryDto { TeamId = teamId, Position = position, Player = new PlayerDto() { Number = playerNumber, Name = "New Player" } };
@@ -173,11 +197,11 @@ namespace Api.IntegrationTests
         public async Task RemovePlayerFromDepthChart_InvalidPlayer_ShouldReturnNotFound()
         {
             // Arrange
-            var teamId = "A";
+            var teamId = "TestA";
             var playerNumber = 999;
 
             // Act
-            var response = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=QB&playerNumber={playerNumber}");
+            var response = await _client.DeleteAsync($"/api/depthchart?teamId={teamId}&position=Pitcher&playerNumber={playerNumber}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -188,11 +212,11 @@ namespace Api.IntegrationTests
         public async Task GetBackups_ShouldReturnOk()
         {
             // Arrange
-            var teamId = "A";
+            var teamId = "TestA";
             var playerNumber = 1;
 
             // Act
-            var response = await _client.GetAsync($"/api/depthchart/backups?teamId={teamId}&position=QB&playerNumber={playerNumber}");
+            var response = await _client.GetAsync($"/api/depthchart/backups?teamId={teamId}&position=Pitcher&playerNumber={playerNumber}");
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -206,7 +230,7 @@ namespace Api.IntegrationTests
         public async Task GetTeamsBySport_ShouldReturnOk()
         {
             // Arrange
-            var sport = Sport.NFL;
+            var sport = Sport.TEST;
 
             // Act
             var response = await _client.GetAsync($"/api/teams?sport={sport}");
@@ -216,6 +240,41 @@ namespace Api.IntegrationTests
             var returnedTeams = await response.Content.ReadFromJsonAsync<List<TeamDto>>();
             returnedTeams.Should().NotBeNull();
             returnedTeams.Count.Should().Be(2);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public async Task AddTeam_InvalidRequest_ShouldReturnBadRequest()
+        {
+            // Arrange
+
+            // Act
+            var response = await _client.PostAsJsonAsync($"/api/team", new { id = "", name = "", sport = "TEST" });
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+            var errorResponse = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+            errorResponse.Should().NotBeNull();
+            errorResponse.Errors.Should().ContainKey("Id");
+            errorResponse.Errors.Should().ContainKey("Name");
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
+        public async Task AddTeam_NewTeam_ShouldReturnOK()
+        {
+            // Arrange
+
+            // Act
+            var response = await _client.PostAsJsonAsync($"/api/team", new { id = "NewTeam", name = "New Team", sport = "TEST" });
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var getResponse = await _client.GetAsync($"/api/teams?sport=TEST");
+            getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            var returnedTeams = await getResponse.Content.ReadFromJsonAsync<List<TeamDto>>();
+            returnedTeams.Should().NotBeNull();
+            returnedTeams.Count.Should().Be(3);
         }
     }
 }

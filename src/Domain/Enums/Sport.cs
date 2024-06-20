@@ -8,6 +8,7 @@ namespace Domain.Enums
         NFL,
         MLB,
         NHL,
-        NBA
+        NBA,
+        TEST
     }
 }
