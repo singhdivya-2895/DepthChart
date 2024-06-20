@@ -32,13 +32,13 @@ This project is a .NET 7 application that manages a depth chart for sports teams
 
 The project follows the Command Query Responsibility Segregation (CQRS) pattern, using the same database for both command and query operations. In a real-world scenario, the query operations would be connected to a read replica with proper indexing to enhance read performance.
 
-![CQRS Pattern](pattern.jpg)
+![CQRS Pattern](./resources/pattern.jpg)
 
 ## Instructions to Run
 
 ### Using Docker
 
-   Ensure you have Docker installed and running on your machine. You can start the application using Docker Compose with the following command:
+1. Ensure you have Docker installed and running on your machine. You can start the application using Docker Compose with the following command:
 
    ```bash
    docker-compose up
@@ -47,6 +47,7 @@ The project follows the Command Query Responsibility Segregation (CQRS) pattern,
 
    docker compose -f .\docker-compose.debug.yml up -d
    ```
+2. Browse [http://localhost:5000/swagger/index.html](http://localhost:5000/swagger/index.html) on your browser.
 ### Using Visual Studio
 1. Open the solution in Visual Studio.
 2. Build the solution to restore the necessary packages and compile the project.
@@ -86,3 +87,18 @@ The API layer exposes several routes for managing the depth chart. Below is an e
 
 - **DbContext**: Manages the database connection and entity configurations.
 - **Repository**: Provides data access methods for the domain models.
+
+## Data
+
+### Supported Teams
+- NFL
+- MLB
+- NHL
+- NBA
+- TEST - *Note: This is for integration tests.*
+
+### Sample Data
+I have already seeded some data for Team A in NFL.
+
+E.g.: Full Depth chart for Team A
+![Full Depth Chart for Team A](./resources/response.png)
