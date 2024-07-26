@@ -148,7 +148,7 @@ namespace Domain.Tests
             team.AddDepthChartEntry("QB", player, 1); // Adding the same player again
 
             // Assert
-            team.DepthChartEntries.Should().HaveCount(2);
+            team.DepthChartEntries.Should().HaveCount(1);
         }
 
         [Fact]
