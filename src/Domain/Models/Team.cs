@@ -23,7 +23,9 @@ namespace Domain.Models
         public void AddDepthChartEntry(string position, Player player, int positionDepth = -1)
         {
             var entry = new DepthChartEntry(Id, position, positionDepth, player);
-
+            var isPlayerAlreadyExistForPosition = _depthChartEntries.Any(x=> x.Player.Number == player.Number && x.Position == position);
+            if(isPlayerAlreadyExistForPosition) { return; }
+            
             if (positionDepth >= 0)
             {
                 foreach (var existingEntry in _depthChartEntries.Where(e => e.Position == position && e.PositionDepth >= positionDepth))
